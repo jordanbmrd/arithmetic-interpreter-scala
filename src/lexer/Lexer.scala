@@ -23,15 +23,9 @@ class Lexer(in: InputStream):
   private def nextToken(): Token =
     currentChar match
       case -1 | '\n' => in.close(); EOF
-      case ' ' | '\t' => nextChar(); nextToken()
+      case '\r' | '\t' | ' ' => nextChar(); nextToken()
       case '0' => nextChar(); NUMBER(0)
-      case c if c >= '1' && c <= '9' =>
-        var num = c - '0'
-        nextChar()
-        while currentChar >= '0' && currentChar <= '9' do
-          num = num * 10 + (currentChar - '0')
-          nextChar()
-        NUMBER(num)
+      case n if n >= '1' && n <= '9' => nextChar(); number(n)
       case '(' => nextChar(); LPAR
       case ')' => nextChar(); RPAR
       case '+' => nextChar(); PLUS
@@ -51,6 +45,13 @@ class Lexer(in: InputStream):
           throw new Exception(s"Unexpected character: ${currentChar.toChar}, ascii $currentChar")
       case _ => throw new Exception(s"Unexpected character: ${currentChar.toChar}, ascii $currentChar")
     end match
+
+  private def number(n: Int): Token =
+    var num = n - '0'
+    while currentChar >= '0' && currentChar <= '9' do
+      num = num * 10 + (currentChar - '0')
+      nextChar()
+    NUMBER(num)
 
 object Lexer:
   private var lexer: Option[Lexer] = None
