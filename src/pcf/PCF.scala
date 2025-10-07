@@ -1,11 +1,10 @@
-package calc
+package pcf
 
 import evaluator.Evaluator.eval
-import parserANTLR.AbstractParser
-
+import parserPCF.AbstractParser
 import java.io.{FileInputStream, InputStream}
 
-object Calc:
+object PCF:
   def main(args: Array[String]): Unit =
     val in: InputStream =
       if args.isEmpty then
@@ -20,5 +19,3 @@ object Calc:
     else println(s"==> ${eval(exp)}")*/
     val term = AbstractParser.analyze(in);
     println(s"==> ${eval(term, Map())}")
-
-
