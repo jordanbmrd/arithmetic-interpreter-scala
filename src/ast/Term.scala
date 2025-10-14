@@ -6,7 +6,8 @@ enum Term:
   case BinaryExp(op: Op, exp1: Term, exp2: Term)
   case Var(name: String)
   case Let(name: String, value: Term, body: Term)   // let name = value in body
-  case VarDecl(name: String)
+  case Fun(param: String, body: Term)               // fun param -> body
+  case App(funExp: Term, argExp: Term)              // funExp argExp
 
 enum Op:
   case Plus, Minus, Times, Div

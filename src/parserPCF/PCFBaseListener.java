@@ -17,6 +17,18 @@ public class PCFBaseListener implements PCFListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterApp(PCFParser.AppContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitApp(PCFParser.AppContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterParExp(PCFParser.ParExpContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -36,18 +48,6 @@ public class PCFBaseListener implements PCFListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitNumber(PCFParser.NumberContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterVarDecl(PCFParser.VarDeclContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitVarDecl(PCFParser.VarDeclContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -84,6 +84,18 @@ public class PCFBaseListener implements PCFListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitIfZero(PCFParser.IfZeroContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterFun(PCFParser.FunContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitFun(PCFParser.FunContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

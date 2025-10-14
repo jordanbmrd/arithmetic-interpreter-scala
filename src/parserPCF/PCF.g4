@@ -7,7 +7,8 @@ term:
    | term OP term                                   # BinaryExp
    | 'ifz' term 'then' term 'else' term             # IfZero
    | 'let' ID '=' term 'in' term                    # Let
-   | 'var' ID                                       # VarDecl
+   | 'fun' ID '->' term                             # Fun
+   | term term                                      # App
    ;
 
 ID: [a-z][a-z0-9]*;

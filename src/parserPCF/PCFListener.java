@@ -8,6 +8,18 @@ import org.antlr.v4.runtime.tree.ParseTreeListener;
  */
 public interface PCFListener extends ParseTreeListener {
 	/**
+	 * Enter a parse tree produced by the {@code App}
+	 * labeled alternative in {@link PCFParser#term}.
+	 * @param ctx the parse tree
+	 */
+	void enterApp(PCFParser.AppContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code App}
+	 * labeled alternative in {@link PCFParser#term}.
+	 * @param ctx the parse tree
+	 */
+	void exitApp(PCFParser.AppContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code ParExp}
 	 * labeled alternative in {@link PCFParser#term}.
 	 * @param ctx the parse tree
@@ -31,18 +43,6 @@ public interface PCFListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitNumber(PCFParser.NumberContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code VarDecl}
-	 * labeled alternative in {@link PCFParser#term}.
-	 * @param ctx the parse tree
-	 */
-	void enterVarDecl(PCFParser.VarDeclContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code VarDecl}
-	 * labeled alternative in {@link PCFParser#term}.
-	 * @param ctx the parse tree
-	 */
-	void exitVarDecl(PCFParser.VarDeclContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code Var}
 	 * labeled alternative in {@link PCFParser#term}.
@@ -79,6 +79,18 @@ public interface PCFListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitIfZero(PCFParser.IfZeroContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Fun}
+	 * labeled alternative in {@link PCFParser#term}.
+	 * @param ctx the parse tree
+	 */
+	void enterFun(PCFParser.FunContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Fun}
+	 * labeled alternative in {@link PCFParser#term}.
+	 * @param ctx the parse tree
+	 */
+	void exitFun(PCFParser.FunContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code BinaryExp}
 	 * labeled alternative in {@link PCFParser#term}.

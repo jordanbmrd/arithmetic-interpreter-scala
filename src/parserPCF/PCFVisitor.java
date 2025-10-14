@@ -11,6 +11,13 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
  */
 public interface PCFVisitor<T> extends ParseTreeVisitor<T> {
 	/**
+	 * Visit a parse tree produced by the {@code App}
+	 * labeled alternative in {@link PCFParser#term}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitApp(PCFParser.AppContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code ParExp}
 	 * labeled alternative in {@link PCFParser#term}.
 	 * @param ctx the parse tree
@@ -24,13 +31,6 @@ public interface PCFVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitNumber(PCFParser.NumberContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code VarDecl}
-	 * labeled alternative in {@link PCFParser#term}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitVarDecl(PCFParser.VarDeclContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code Var}
 	 * labeled alternative in {@link PCFParser#term}.
@@ -52,6 +52,13 @@ public interface PCFVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitIfZero(PCFParser.IfZeroContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code Fun}
+	 * labeled alternative in {@link PCFParser#term}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFun(PCFParser.FunContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code BinaryExp}
 	 * labeled alternative in {@link PCFParser#term}.
