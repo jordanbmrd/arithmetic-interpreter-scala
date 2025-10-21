@@ -22,7 +22,6 @@ object PCF:
     def interpret(in:InputStream): String =
       val (term, a) = analyze(in)
       val value = Evaluator.eval(term, Map())
-      println(s"==> ${value}: $a")
       s"$value:$a"
 
     def analyze(in: InputStream): (Term, typer.Type) =
