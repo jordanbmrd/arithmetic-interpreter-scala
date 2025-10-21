@@ -1,5 +1,5 @@
 package test
-import calc.Calc.main
+import pcf.PCF.main
 
 @main
 def test(): Unit =

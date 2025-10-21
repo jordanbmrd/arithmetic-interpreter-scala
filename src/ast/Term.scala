@@ -8,6 +8,7 @@ enum Term:
   case Let(name: String, value: Term, body: Term)   // let name = value in body
   case Fun(param: String, body: Term)               // fun param -> body
   case App(funExp: Term, argExp: Term)              // funExp argExp
+  case Fix(name: String, body: Term)                // fix name body
 
 enum Op:
   case Plus, Minus, Times, Div

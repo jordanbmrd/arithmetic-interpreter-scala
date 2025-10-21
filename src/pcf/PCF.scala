@@ -1,21 +1,40 @@
 package pcf
 
-import evaluator.Evaluator.eval
-import parserPCF.AbstractParser
+import ast.Term
+import evaluator.Evaluator
+import generator.{Code, Generator}
+import parser.AbstractParser
+import typer.Typer
+
 import java.io.{FileInputStream, InputStream}
 
 object PCF:
   def main(args: Array[String]): Unit =
     val in: InputStream =
-      if args.isEmpty then
+      if args.isEmpty || args(0).charAt(0) == '-' then
         System.in
       else
         FileInputStream(args(0))
-    /*Lexer(in)
-    val exp = Parser.parse(Lexer.nextToken())
-    val token = Lexer.nextToken()
-    if token != lexer.Token.EOF then
-      throw new Exception(s"Unexpected token $token after parsing complete expression $exp")
-    else println(s"==> ${eval(exp)}")*/
-    val term = AbstractParser.analyze(in);
-    println(s"==> ${eval(term, Map())}")
+
+    // if (args.contains("-i")) println(s"==> ${interpret(in)}")
+    // else println(compile(in))
+    interpret(in)
+
+    def interpret(in:InputStream): String =
+      val (term, a) = analyze(in)
+      val value = Evaluator.eval(term, Map())
+      println(s"==> ${value}: $a")
+      s"$value:$a"
+
+    def analyze(in: InputStream): (Term, typer.Type) =
+      val term = AbstractParser.analyze(in)
+      val typ = Typer.eval(term, Map())
+      (term, typ)
+
+    def compile(in: InputStream): Code =
+      val (term, _) = analyze(in)
+      Generator.gen(term)
+
+    // val term = AbstractParser.analyze(in)
+    // val typ = Typer.eval(term, Map())
+    // println(s"==> ${Evaluator.eval(term, Map())}: $typ")
