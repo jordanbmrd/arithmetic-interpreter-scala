@@ -16,9 +16,8 @@ object PCF:
       else
         FileInputStream(args(0))
 
-    // if (args.contains("-i")) println(s"==> ${interpret(in)}")
-    // else println(compile(in))
-    interpret(in)
+    if (args.contains("-i")) println(s"==> ${interpret(in)}")
+    else println(compile(in))
 
     def interpret(in:InputStream): String =
       val (term, a) = analyze(in)
