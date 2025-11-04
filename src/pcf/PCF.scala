@@ -30,8 +30,18 @@ object PCF:
       (term, typ)
 
     def compile(in: InputStream): Code =
-      val (term, _) = analyze(in)
-      Generator.gen(term)
+      val (term, a) = analyze(in)
+      val aterm = term.annotate(List()) // calcul des indices de De Bruijn
+      val code = Generator.gen(term)
+      if check(term, code) then code
+      else throw Exception("Implementation Error")
+
+    def check(term: Term, code: Code): Boolean =
+      val value = Evaluator.eval(term, Map())
+      println(value)
+      println(code) // in case the execution fails
+      val value2 = vm.VM.execute(code)
+      value2.toString == value.toString // valid only for PCF green and blue
 
     // val term = AbstractParser.analyze(in)
     // val typ = Typer.eval(term, Map())

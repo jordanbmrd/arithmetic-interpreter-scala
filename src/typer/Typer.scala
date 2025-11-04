@@ -2,7 +2,6 @@ package typer
 
 import ast.Term
 import ast.Term.*
-import ast.Op.*
 import unify.TVar
 
 object Typer:

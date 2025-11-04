@@ -10,6 +10,10 @@ enum Term:
   case App(funExp: Term, argExp: Term)              // funExp argExp
   case Fix(name: String, body: Term)                // fix name body
 
+  def annotate(e: List[String]): ATerm = this
+
+type ATerm = Term
+
 enum Op:
   case Plus, Minus, Times, Div
 
