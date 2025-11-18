@@ -46,11 +46,9 @@ object Generator:
     case Fix(name, body) =>
       body match
         case Fun(param, inner) =>
-          // Recursive function: compile inner body with param at index 0 and name at index 1
           val c_inner = gen(inner, param :: name :: env)
           List(MkRecClos(c_inner))
         case other =>
-          // Fallback (rare in tests): treat as recursive term without parameters
           val c_body = gen(other, name :: env)
           List(MkRecClos(c_body))
 
