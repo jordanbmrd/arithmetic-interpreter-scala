@@ -8,6 +8,8 @@ import scala.annotation.tailrec
 
 enum Value:
   case IntVal(n: Int)
+  case Closure(code: List[Ins], env: Env)
+  case RecClosure(code: List[Ins], env: Env)
 
 type Env = List[Value]
 // case class VMState(a: Value, s:List[Value|Env], e: Env, c: List[Ins])
@@ -28,6 +30,21 @@ object VM:
     case (IntVal(0), _, _, Test(i, _)::c) => execute(a, s, e, i:::c)
     case (_, _, _, Test(_, j)::c) => execute(a, s, e, j:::c)
     case (_, _, _, Search(p)::c) => execute(e(p), s, e, c)
+    case (_, _, _, Bind::c) => execute(a, s, a::e, c)
+    case (_, _, _::eTail, Unbind::c) => execute(a, s, eTail, c)
+    case (_, _, _, MkClos(body)::c) => execute(Closure(body, e), s, e, c)
+    case (_, _, _, MkRecClos(body)::c) => execute(RecClosure(body, e), s, e, c)
+    case (arg, Closure(code, envFun)::sTail, eCur, App::c) =>
+      // save current env on stack, switch to function env extended with argument, and run function code then return
+      execute(arg, eCur::sTail, arg::envFun, code ::: (Ret :: c))
+    case (arg, RecClosure(code, envFun)::sTail, eCur, App::c) =>
+      // recursive closure: bind self for recursive name before argument scope expected by code
+      val self = RecClosure(code, envFun)
+      execute(arg, eCur::sTail, arg::self::envFun, code ::: (Ret :: c))
+    case (a, saved :: sTail, _, Ret::c) =>
+      saved match
+        case envSaved: Env @unchecked => execute(a, sTail, envSaved, c)
+        case _ => throw Exception(s"unexpected stack content on Ret: $saved")
     case state => throw Exception(s"unexpected VM state $state")
 
 @main

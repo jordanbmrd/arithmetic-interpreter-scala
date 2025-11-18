@@ -42,7 +42,10 @@ object PCF:
       println(value)
       println(code) // in case the execution fails
       val value2 = vm.VM.execute(code)
-      value2.toString == value.toString // valid only for PCF green and blue
+      // Only compare when the result is an integer (green/blue scope). For functional results, skip equality.
+      value match
+        case evaluator.Value.IntVal(_) => value2.toString == value.toString
+        case _ => true
 
     // val term = AbstractParser.analyze(in)
     // val typ = Typer.eval(term, Map())
