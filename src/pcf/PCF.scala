@@ -32,6 +32,7 @@ object PCF:
     def compile(in: InputStream): Code =
       val (term, a) = analyze(in)
       val aterm = term.annotate(List()) // calcul des indices de De Bruijn
+      println(s"annotated AST: $aterm")
       val code = Generator.gen(term)
       if check(term, code) then code
       else throw Exception("Implementation Error")

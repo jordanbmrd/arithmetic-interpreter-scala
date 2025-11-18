@@ -27,6 +27,7 @@ object VM:
     case (IntVal(n), IntVal(m)::s, _, Div::c) => execute(IntVal(m/n), s, e, c)
     case (IntVal(0), _, _, Test(i, _)::c) => execute(a, s, e, i:::c)
     case (_, _, _, Test(_, j)::c) => execute(a, s, e, j:::c)
+    case (_, _, _, Search(p)::c) => execute(e(p), s, e, c)
     case state => throw Exception(s"unexpected VM state $state")
 
 @main
