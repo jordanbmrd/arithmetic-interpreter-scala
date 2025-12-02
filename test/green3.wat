@@ -109,15 +109,19 @@
     (i32.const 11) 
     (return)
   )
+
   (func (export "main") (result i32)
-  i32.const 0
-  i32.eqz
-  (if (result i32)
-    (then
-      i32.const 1
+    (local $TMP1 i32) (local $TMP2 i32)
+    i32.const 0
+    i32.eqz
+    (if (result i32)
+      (then
+        i32.const 1
+      )
+      (else
+        i32.const 2
+      )
     )
-    (else
-      i32.const 2
-    )
-  )
-  return))
+    return)
+
+)

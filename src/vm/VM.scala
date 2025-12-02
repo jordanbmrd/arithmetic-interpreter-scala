@@ -44,8 +44,8 @@ object VM:
     case (s, e, Search(p) :: c) => execute(e(p) :: s, e, c)
 
     // Closures
-    case (s, e, MkClos(body) :: c) => execute(Closure(body, e) :: s, e, c)
-    case (s, e, MkRecClos(body) :: c) => execute(RecClosure(body, e) :: s, e, c)
+    case (s, e, MkClos(_, body) :: c) => execute(Closure(body, e) :: s, e, c)
+    case (s, e, MkRecClos(_, body) :: c) => execute(RecClosure(body, e) :: s, e, c)
 
     // Application: pop arg then function closure; save env on stack; run body; on Ret, restore env
     case ((arg: Value) :: Closure(code, envFun) :: sTail, eCur, App :: c) =>

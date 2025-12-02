@@ -109,8 +109,12 @@
     (i32.const 11) 
     (return)
   )
+
   (func (export "main") (result i32)
-  i32.const 1
-  i32.const 2
-  i32.sub
-  return))
+    (local $TMP1 i32) (local $TMP2 i32)
+    i32.const 1
+    i32.const 2
+    i32.sub
+    return)
+
+)

@@ -1,5 +1,7 @@
 package ast
 
+import parser.SyntaxError
+
 enum Term:
   case Number(value: Int)
   case IfZero(cond: Term, zBranch: Term, nzBranch: Term)
@@ -9,8 +11,30 @@ enum Term:
   case Fun(param: String, body: Term)               // fun param -> body
   case App(funExp: Term, argExp: Term)              // funExp argExp
   case Fix(name: String, body: Term)                // fix name body
+  // Annotated version: body must be a function; normalized to FixFun
+  case FixFun(name: String, param: String, body: Term)
 
-  def annotate(e: List[String]): ATerm = this
+  def annotate(e: List[String]): ATerm = this match
+    case n @ Number(_) => n
+    case Var(name) => Var(name)
+    case BinaryExp(op, u, v) => BinaryExp(op, u.annotate(e), v.annotate(e))
+    case IfZero(c, z, nz) => IfZero(c.annotate(e), z.annotate(e), nz.annotate(e))
+    case Let(name, value, body) =>
+      Let(name, value.annotate(e), body.annotate(name :: e))
+    case Fun(param, body) =>
+      Fun(param, body.annotate(param :: e))
+    case App(f, a) =>
+      App(f.annotate(e), a.annotate(e))
+    case Fix(name, body) =>
+      body match
+        case Fun(param, inner) =>
+          // In annotated AST, represent as FixFun
+          FixFun(name, param, inner.annotate(param :: name :: e))
+        case _ =>
+          throw new SyntaxError("Syntax error: fix body must be a function")
+    case FixFun(name, param, body) =>
+      // Already annotated form; ensure children are annotated
+      FixFun(name, param, body.annotate(param :: name :: e))
 
 type ATerm = Term
 

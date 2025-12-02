@@ -9,7 +9,8 @@ enum Ins:
   case PushEnv
   case Extend
   case PopEnv
-  case MkClos(body: List[Ins])
-  case MkRecClos(body: List[Ins])
+  // Refined: associate a stable index to each closure body
+  case MkClos(idx: Int, body: List[Ins])
+  case MkRecClos(idx: Int, body: List[Ins])
   case App
   case Ret

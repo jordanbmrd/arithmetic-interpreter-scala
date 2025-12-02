@@ -109,33 +109,37 @@
     (i32.const 11) 
     (return)
   )
+
   (func (export "main") (result i32)
-  global.get $ENV
-  i32.const 4
-  i32.const 2
-  i32.sub
-  i32.eqz
-  (if (result i32)
-    (then
-      i32.const 3
-      i32.const 2
-      i32.const 2
-      i32.mul
-      i32.sub
+    (local $TMP1 i32) (local $TMP2 i32)
+    global.get $ENV
+    i32.const 4
+    i32.const 2
+    i32.sub
+    i32.eqz
+    (if (result i32)
+      (then
+        i32.const 3
+        i32.const 2
+        i32.const 2
+        i32.mul
+        i32.sub
+      )
+      (else
+        i32.const 1
+      )
     )
-    (else
-      i32.const 1
-    )
-  )
-  global.get $ENV
-  call $cons
-  global.set $ENV
-  i32.const 2
-  i32.const 0
-  global.get $ENV
-  call $search
-  i32.div_s
-  global.set $ACC
-  global.set $ENV
-  global.get $ACC
-  return))
+    global.get $ENV
+    call $cons
+    global.set $ENV
+    i32.const 2
+    i32.const 0
+    global.get $ENV
+    call $search
+    i32.div_s
+    global.set $ACC
+    global.set $ENV
+    global.get $ACC
+    return)
+
+)

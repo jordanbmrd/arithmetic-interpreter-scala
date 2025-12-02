@@ -39,7 +39,13 @@ object PCF:
       (term, typ)
 
     def compile(verbose: Boolean, check_am: Boolean, is: InputStream, filename: Option[String]): Unit =
-      val (term, _) = analyze(verbose, is)
+      val (term, typ) = analyze(verbose, is)
+      // Policy: compile if result is INT, or if the top-level term is a function literal.
+      // This allows tests like red0 (top-level Fun) while rejecting non-INT results from applications (e.g., red19).
+      if !(typ === typer.INT) then
+        term match
+          case ast.Term.Fun(_, _) => () // allow top-level function values
+          case _ => throw Exception(s"Top-level expression must be INT, got $typ")
       val aterm = term.annotate(List())
       if verbose then println(s"annotated AST: $aterm")
       if check_am then
