@@ -12,42 +12,57 @@ enum Value:
   case RecClosure(code: List[Ins], env: Env)
 
 type Env = List[Value]
-// case class VMState(a: Value, s:List[Value|Env], e: Env, c: List[Ins])
 
 object VM:
   def execute(c: List[Ins]): Value =
-    execute(IntVal(0), List(), List(), c)
+    execute(List(), List(), c)
 
   @tailrec
-  def execute(a: Value, s:List[Value|Env], e: Env, c: List[Ins]): Value = (a, s, e, c) match
-    case (_, _, _, List()) => a
-    case (_, _, _, Push::c) => execute(a, a::s, e, c)
-    case (_, _, _, Ldi(n)::c) => execute(IntVal(n), s, e, c)
-    case (IntVal(n), IntVal(m)::s, _, Add::c) => execute(IntVal(m+n), s, e, c)
-    case (IntVal(n), IntVal(m)::s, _, Sub::c) => execute(IntVal(m-n), s, e, c)
-    case (IntVal(n), IntVal(m)::s, _, Mul::c) => execute(IntVal(m*n), s, e, c)
-    case (IntVal(n), IntVal(m)::s, _, Div::c) => execute(IntVal(m/n), s, e, c)
-    case (IntVal(0), _, _, Test(i, _)::c) => execute(a, s, e, i:::c)
-    case (_, _, _, Test(_, j)::c) => execute(a, s, e, j:::c)
-    case (_, _, _, Search(p)::c) => execute(e(p), s, e, c)
-    case (_, _, _, Bind::c) => execute(a, s, a::e, c)
-    case (_, _, _::eTail, Unbind::c) => execute(a, s, eTail, c)
-    case (_, _, _, MkClos(body)::c) => execute(Closure(body, e), s, e, c)
-    case (_, _, _, MkRecClos(body)::c) => execute(RecClosure(body, e), s, e, c)
-    case (arg, Closure(code, envFun)::sTail, eCur, App::c) =>
-      execute(arg, eCur::sTail, arg::envFun, code ::: (Ret :: c))
-    case (arg, RecClosure(code, envFun)::sTail, eCur, App::c) =>
+  def execute(s:List[Value|Env], e: Env, c: List[Ins]): Value = (s, e, c) match
+    // End of code: result must be on top of the stack
+    case ((v: Value) :: _, _, List()) => v
+
+    // Literals
+    case (s, e, Ldi(n) :: c) => execute(IntVal(n) :: s, e, c)
+
+    // Environment save/restore for let
+    case (s, e, PushEnv :: c) => execute(e :: s, e, c)
+    case ((v: Value) :: sTail, e, Extend :: c) => execute(sTail, v :: e, c)
+    case ((res: Value) :: (envSaved: Env) :: sTail, _, PopEnv :: c) => execute(res :: sTail, envSaved, c)
+
+    // Arithmetic (pop two, push one)
+    case (IntVal(n) :: IntVal(m) :: s, e, Add :: c) => execute(IntVal(m + n) :: s, e, c)
+    case (IntVal(n) :: IntVal(m) :: s, e, Sub :: c) => execute(IntVal(m - n) :: s, e, c)
+    case (IntVal(n) :: IntVal(m) :: s, e, Mul :: c) => execute(IntVal(m * n) :: s, e, c)
+    case (IntVal(n) :: IntVal(m) :: s, e, Div :: c) => execute(IntVal(m / n) :: s, e, c)
+
+    // Conditional (pop condition)
+    case (IntVal(0) :: s, e, Test(i, _) :: c) => execute(s, e, i ::: c)
+    case (IntVal(_) :: s, e, Test(_, j) :: c) => execute(s, e, j ::: c)
+
+    // Environment lookup and binding
+    case (s, e, Search(p) :: c) => execute(e(p) :: s, e, c)
+
+    // Closures
+    case (s, e, MkClos(body) :: c) => execute(Closure(body, e) :: s, e, c)
+    case (s, e, MkRecClos(body) :: c) => execute(RecClosure(body, e) :: s, e, c)
+
+    // Application: pop arg then function closure; save env on stack; run body; on Ret, restore env
+    case ((arg: Value) :: Closure(code, envFun) :: sTail, eCur, App :: c) =>
+      execute(eCur :: sTail, arg :: envFun, code ::: (Ret :: c))
+    case ((arg: Value) :: RecClosure(code, envFun) :: sTail, eCur, App :: c) =>
       val self = RecClosure(code, envFun)
-      execute(arg, eCur::sTail, arg::self::envFun, code ::: (Ret :: c))
-    case (a, saved :: sTail, _, Ret::c) =>
-      saved match
-        case envSaved: Env @unchecked => execute(a, sTail, envSaved, c)
-        case _ => throw Exception(s"unexpected stack content on Ret: $saved")
+      execute(eCur :: sTail, arg :: self :: envFun, code ::: (Ret :: c))
+
+    // Return: stack must be result :: savedEnv :: sTail
+    case ((res: Value) :: (envSaved: Env) :: sTail, _, Ret :: c) =>
+      execute(res :: sTail, envSaved, c)
+
     case state => throw Exception(s"unexpected VM state $state")
 
 @main
 def test(): Unit =
-  println(VM.execute(List(Ldi(1), Push, Ldi(2), Add, Test(List(Ldi(1)),List(Ldi(2))))))
+  println(VM.execute(List(Ldi(1), Ldi(2), Add, Test(List(Ldi(1)), List(Ldi(2))))))
 
 
 

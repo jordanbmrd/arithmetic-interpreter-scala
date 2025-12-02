@@ -6,41 +6,69 @@ import generator.{Code, Generator}
 import parser.AbstractParser
 import typer.Typer
 
-import java.io.{FileInputStream, InputStream}
+import java.io.{FileInputStream, FileWriter, InputStream}
 
 object PCF:
   def main(args: Array[String]): Unit =
-    val in: InputStream =
+    val verbose = args.length == 0 || args.length > 1 && args.contains("-v")
+    val checkAM = args.contains("-vm")
+    val interpretOnly = args.contains("-i")
+
+    val (in, filename) =
       if args.isEmpty || args(0).charAt(0) == '-' then
-        System.in
+        (System.in, Option.empty[String])
       else
-        FileInputStream(args(0))
+        (FileInputStream(args(0)), Some(args(0)))
 
-    if (args.contains("-i")) println(s"==> ${interpret(in)}")
-    else println(compile(in))
+    if interpretOnly then
+      println(s"==> ${interpret(in)}")
+    else
+      compile(verbose, checkAM, in, filename)
 
-    def interpret(in:InputStream): String =
-      val (term, a) = analyze(in)
+    def interpret(in: InputStream): String =
+      val (term, a) = analyze(verbose, in)
       val value = Evaluator.eval(term, Map())
       s"$value:$a"
 
-    def analyze(in: InputStream): (Term, typer.Type) =
+    def analyze(verbose: Boolean, in: InputStream): (Term, typer.Type) =
       val term = AbstractParser.analyze(in)
       val typ = Typer.eval(term, Map())
+      if verbose then
+        println(s"AST: $term")
+        println(s"Type: $typ")
       (term, typ)
 
-    def compile(in: InputStream): Code =
-      val (term, a) = analyze(in)
-      val aterm = term.annotate(List()) // calcul des indices de De Bruijn
-      println(s"annotated AST: $aterm")
-      val code = Generator.gen(term)
-      if check(term, code) then code
-      else throw Exception("Implementation Error")
+    def compile(verbose: Boolean, check_am: Boolean, is: InputStream, filename: Option[String]): Unit =
+      val (term, _) = analyze(verbose, is)
+      val aterm = term.annotate(List())
+      if verbose then println(s"annotated AST: $aterm")
+      if check_am then
+        val code = Generator.genAM(aterm)
+        if verbose then println(s"Code: $code")
+        if !check(term, code) then throw Exception("Implementation Error")
+      else
+        val code = Generator.gen(aterm)
+        if filename.isDefined then
+          write(code)
+        else
+          println(code)
+
+      // write code to .wat file associated to .pcf file passed as argument,
+      // returning .wat file relative filename
+      def write(code: String): String =
+        val WatFilename = filename.get.replaceFirst("\\.pcf\\z", ".wat")
+        if verbose then println("writing .wat code to " + WatFilename)
+        val out = new FileWriter(WatFilename)
+        out.write(code)
+        out.flush()
+        out.close()
+        WatFilename
 
     def check(term: Term, code: Code): Boolean =
       val value = Evaluator.eval(term, Map())
-      println(value)
-      println(code) // in case the execution fails
+      if verbose then
+        println(value)
+        println(code) // in case the execution fails
       val value2 = vm.VM.execute(code)
       // Only compare when the result is an integer (green/blue scope). For functional results, skip equality.
       value match

@@ -7,11 +7,11 @@
   (global $NIL  i32 (i32.const 0))       ;; NIL tag (for empty lists)
 
   ;; table of closure bodies
-  ;; (table funcref
-  ;;  (elem
-  ;;    $eleven ;; index 0
-  ;;  )
-  ;; )
+  (table funcref
+    (elem
+      $eleven ;; index 0
+    )
+  )
   ;; stores a pair on the heap and returns a pointer to the pair
   ;; final state (initially result = HEAP):
   ;;             ----------
@@ -36,7 +36,7 @@
     (local.get $result)
     return)
   ;; stores a cons on the heap and returns a pointer to the cons
-  ;; a cons is stored as a block of 3 words: a LIST tag, the head and the tail
+  ;; a cons is stored as a block of 3 words: a LIST tag, the head and the tail  
   ;;             ----------
   ;;   result -> | LIST   |
   ;;             ----------
@@ -60,15 +60,15 @@
   (func $head (param $list i32) (result i32)
     (i32.load (i32.add (local.get $list (i32.const 4))))
     return)
-  ;; returns the tail of a list, i.e. [list + 8]
+  ;; returns the head of a list, i.e. [list + 8]
   (func $tail (param $list i32) (result i32)
     (i32.load (i32.add (local.get $list (i32.const 8))))
     return)
   ;; retrieves the element $n of the list $list (starting from 0)
   ;; precondition: the size of the list is greater than $n
   (func $search (param $n i32) (param $list i32) (result i32)
-    (local.get $n)
-    (if (result i32)
+    (local.get $n) 
+    (if (result i32)              
       (then            ;; n is non zero
        ;; push n-1
        (i32.sub (local.get $n) (i32.const 1))
@@ -85,8 +85,30 @@
        ;; call head(list)
        (call $head)))
     return)
-  (func (export "main") (result i32)
-    (i32.const 42)
+  ;; applies a closure
+  ;; its parameters are
+  ;;   $W : the value of the argument
+  ;;   $C : the closure, a pointer to a pair (i, e) 
+  (func $apply (param $W i32)(param $C i32)(result i32)
+      (local $e i32) ;; the environment e stored in the closure
+      (local.get $W) ;; element 0 of the environment
+      (local.get $C) ;; element 1 of the environment
+    ;; retrieve the environment in the closure (2nd element of a pair)
+      (local.set $e (i32.load (i32.add (local.get $C)(i32.const 4))))
+    ;; extend the environment e to <W, <C, e>>
+      (local.get $e)
+      (call $cons)
+      (call $cons)
+      (global.set $ENV)
+    ;; retrieve index of closure body and execute the body
+    (call_indirect (result i32) (i32.load (local.get $C)))
+  )
+
+  ;; for testing purposes
+  (func $eleven (result i32)
+    (i32.const 11) 
     (return)
   )
-)
+  (func (export "main") (result i32)
+  i32.const 42
+  return))
