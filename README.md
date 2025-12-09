@@ -19,7 +19,7 @@
 
 ### Ce qui ne marche pas ou manque
 
-- Pas de `wat/prelude.wat` dédié dans le dépôt: on dépend de `src/test/am.wat`.
+- On dépend de `src/test/am.wat`.
 - Le WAT généré suppose des symboles du prélude: `$ENV`, `$ACC`, `$apply`, `$search`, `$cons`, `$pair`. Si le prélude diffère, l’exécution peut échouer.
 - Couverture WAT incomplète pour des instructions non utilisées (ex. `Ret` n’est pas émis côté WAT car le retour est géré par la structure des fonctions).
 - Pré‑requis externes: nécessite WABT (`wat2wasm`, `wasm-interp`) installés et dans le `PATH`.
