@@ -1,17 +1,33 @@
-# Arithmetic Scala Interpreter
+### Auteurs
 
-> This project was completed during a practical lab session for the “Compilation et interprétation” course at IMT Atlantique.
+- Valentin CHAUD et Jordan BAUMARD
+- Outils utilisés : Gemini
 
-### How it works
+### Choix de conception (écarts et raisons)
 
-Steps :
+- Compilation uniquement si le type de l’expression est `INT`, sauf si l’expression top‑level est une fonction. Raison: permettre les tests avec des fonctions au niveau racine tout en gardant une sortie exécutable simple.
+- Prélude WAT: chargement prioritaire de `test/am.wat`. Suppression d’un bloc `(table ...)` existant du prélude. Raison: éviter une double table et faciliter le remplacement du prélude.
+- Fermetures: indices stables et emplacement `_self` pour aligner l’environnement avec `$apply`. Raison: correspondre à la convention d’extension d’environnement côté WAT.
+- Vérification: comparaison stricte des résultats seulement pour les entiers; on ne compare pas les fonctions. Raison: l’égalité de fonctions n’est pas définie dans le cadre des tests.
 
-1. Lexing: scan characters and produce tokens like “(”, “)”, “+”, “-”, “*”, “/”, “ifz”, and NUMBER; ignore spaces and newlines.
-2. Parsing: consume tokens to build an AST for either NUMBER, (OP Exp Exp), or (ifz Exp Exp Exp).
-3. Evaluation: recursively compute the AST’s value: numbers return themselves, binary nodes apply integer ops to their children, ifz evaluates its condition and picks the then- or else-branch based on whether it equals 0.
+### Ce qui marche
 
-### Quick examples
+- Analyse, typage et évaluation: nombres, `+ - * /`, `ifz`, `let`, variables, fonctions, récursion (`fix`).
+- Génération WAT pour ces constructions; écriture automatique du `.wat` associé à un `.pcf`.
+- Mode vérification AM: exécution de l’AM et comparaison avec l’interpréteur (option `-vm`).
+- Tests WABT: la chaîne `wat2wasm` + `wasm-interp` est supportée via les scripts de test fournis.
 
-- ```(+ 1 (* 2 2)) → build a BinaryExp tree, then compute 1 + (2*2) = 5.```
-- ```(ifz 0 41 99) → condition is 0, so result is 41.```
-- ```(ifz (+ 1 1) 1 2) → condition is 2 (non-zero), so result is 2.```
+### Ce qui ne marche pas ou manque
+
+- Pas de `wat/prelude.wat` dédié dans le dépôt: on dépend de `src/test/am.wat`.
+- Le WAT généré suppose des symboles du prélude: `$ENV`, `$ACC`, `$apply`, `$search`, `$cons`, `$pair`. Si le prélude diffère, l’exécution peut échouer.
+- Couverture WAT incomplète pour des instructions non utilisées (ex. `Ret` n’est pas émis côté WAT car le retour est géré par la structure des fonctions).
+- Pré‑requis externes: nécessite WABT (`wat2wasm`, `wasm-interp`) installés et dans le `PATH`.
+
+### Comment corriger / compléter
+
+- Ajouter un prélude propre: créer `wat/prelude.wat` compatible (déclarer `$ENV`, `$ACC`, `$apply`, `$search`, `$cons`, `$pair`, mémoire, globals). Cela rend le build indépendant des fichiers de test.
+- Si le prélude change, aligner les appels dans `src/generator/Generator.scala` (émission de `call $...`) et, si besoin, ajuster la logique de sauvegarde/restauration (`$ACC`, `$ENV`).
+- Étendre la génération WAT si de nouvelles instructions sont ajoutées: compléter `emitIns` et la mise en forme associée.
+- Politique top‑level: si exigé par le sujet, limiter la compilation aux seules expressions de type `INT` (modifier `src/pcf/PCF.scala`).
+- Stabiliser les tests: vérifier/adapter `src/test/Test.scala` et s’assurer que WABT est bien installé.
