@@ -8,17 +8,13 @@ import scala.io.Source
 type Code = List[Ins]
 
 object Generator:
-  // Two-step generation API
   def gen(aTerm: Term): String =
     genWAT(genAM(aTerm))
 
-  // Abstract machine code generation (previously 'gen')
   def genAM(term: Term): Code =
     val (code, _) = genAM(term, Nil, 0)
     code
 
-  // Functional threading of closure indices during codegen
-  // Returns generated code and next free index
   private def genAM(term: Term, env: List[String], nextIdx: Int): (Code, Int) = term match
     case Number(n) => (List(Ldi(n)), nextIdx)
 
@@ -28,7 +24,6 @@ object Generator:
       else (List(Search(idx)), nextIdx)
 
     case Fun(param, body) =>
-      // Reserve an index for this closure, then generate its body starting at nextIdx + 1
       val thisIdx = nextIdx
       // Important: in WAT, $apply extends env as <arg, <closure, env>>
       // To keep indices aligned, insert a dummy self slot after the parameter.
@@ -60,7 +55,6 @@ object Generator:
       val thisIdx = nextIdx
       val (c_inner, after) = genAM(inner, param :: name :: env, nextIdx + 1)
       (List(MkRecClos(thisIdx, c_inner)), after)
-    // Backward compatibility: if an unannotated Fix slips through, accept Fun-only
     case Fix(name, body) =>
       body match
         case Fun(param, inner) =>
@@ -79,14 +73,11 @@ object Generator:
       case Op.Times => Mul
       case Op.Div   => Div
 
-  // ===== WAT Generation (Step 2) =====
-  // Structured low-level representation to ease formatting
   type CodeWAT = List[WAT]
   enum WAT:
     case Ins(ins: String)
     case Test(code1: CodeWAT, code2: CodeWAT)
 
-  // Entry point: assemble module with prelude, table, main, and closure functions
   def genWAT(code: Code): String =
     val prelRaw = prelude()
     val prel = stripPreludeTable(prelRaw)
@@ -102,11 +93,9 @@ $mainFun
 $functions
 )"""
 
-  // Translate AM code into WAT AST
   private def emit(code: Code, offset: Int): CodeWAT =
     code.flatMap(ins => emitIns(ins, offset))
 
-  // Translate a single instruction to WAT AST (incremental coverage)
   private def emitIns(ins: Ins, offset: Int): CodeWAT = ins match
     case Ldi(n) => List(WAT.Ins(s"i32.const $n"))
     case Add    => List(WAT.Ins("i32.add"))
@@ -114,8 +103,6 @@ $functions
     case Mul    => List(WAT.Ins("i32.mul"))
     case Div    => List(WAT.Ins("i32.div_s"))
     case Test(i, j) =>
-      // if expects non-zero for then-branch; our semantics is zero => i, non-zero => j
-      // so insert eqz to invert truthiness
       List(WAT.Ins("i32.eqz"), WAT.Test(emit(i, offset), emit(j, offset)))
     case Search(p) =>
       List(
@@ -136,42 +123,37 @@ $functions
         WAT.Ins("call $pair")
       )
     case Ins.App =>
-      // Stack before: ... closure arg
-      // Reorder to: arg closure for $apply (params: W then C)
       List(
-        WAT.Ins("local.set $TMP1"), // TMP1 := arg
-        WAT.Ins("local.set $TMP2"), // TMP2 := closure
-        // Save current ENV
+        WAT.Ins("local.set $TMP1"), 
+        WAT.Ins("local.set $TMP2"), 
         WAT.Ins("global.get $ENV"),
         // Call apply(W, C)
-        WAT.Ins("local.get $TMP1"), // push arg (W)
-        WAT.Ins("local.get $TMP2"), // push closure (C)
-        WAT.Ins("call $apply"),     // result on stack; ENV set to extended
-        // Restore ENV, preserving result via ACC
-        WAT.Ins("global.set $ACC"), // ACC := result ; stack has savedEnv
-        WAT.Ins("global.set $ENV"), // restore previous ENV
-        WAT.Ins("global.get $ACC")  // push result back
+        WAT.Ins("local.get $TMP1"), 
+        WAT.Ins("local.get $TMP2"),
+        WAT.Ins("call $apply"),     
+        WAT.Ins("global.set $ACC"), 
+        WAT.Ins("global.set $ENV"),
+        WAT.Ins("global.get $ACC") 
       )
     case PushEnv =>
       List(WAT.Ins("global.get $ENV"))
     case Extend =>
       List(
         // stack: ... v
-        WAT.Ins("global.get $ENV"), // ... v env
-        WAT.Ins("call $cons"),      // ... env' = cons(v, env)
-        WAT.Ins("global.set $ENV")  // update ENV
+        WAT.Ins("global.get $ENV"), 
+        WAT.Ins("call $cons"),      
+        WAT.Ins("global.set $ENV")  
       )
     case PopEnv =>
       List(
         // stack: ... v env_saved
-        WAT.Ins("global.set $ACC"), // ACC := v ; stack: ... env_saved
-        WAT.Ins("global.set $ENV"), // ENV := env_saved ; stack: ...
-        WAT.Ins("global.get $ACC")  // push v
+        WAT.Ins("global.set $ACC"), 
+        WAT.Ins("global.set $ENV"), 
+        WAT.Ins("global.get $ACC")  
       )
     case other =>
       throw new Exception(s"WAT generation not implemented for instruction: $other")
 
-  // Pretty-printing helpers
   private def spaces(depth: Int): String =
     (for _ <- 0 until depth yield "  ").mkString
 
@@ -193,9 +175,7 @@ $elsePart
 ${spaces(depth + 1)})
 ${spaces(depth)})"""
 
-  // Prelude handling: include memory/globals and helper functions up to $search
   private def prelude(): String =
-    // Try paths in order: explicit prelude, src/test/am.wat, test/am.wat
     val paths = List(
       "wat/prelude.wat",
       "src/test/am.wat",
@@ -209,14 +189,12 @@ ${spaces(depth)})"""
       catch case _: Throwable => None
     paths.iterator.flatMap(readIfExists).toSeq.headOption match
       case Some(content) if content.contains("(module") =>
-        // If the source contains a full module start, slice before exported main if present
         val idx = content.indexOf("""(func (export "main")""")
         if idx >= 0 then content.substring(0, idx).trim
         else content.trim
       case Some(other) => other.trim
       case None => ""
 
-  // Remove an existing (table ...) block from the prelude, if present
   private def stripPreludeTable(prel: String): String =
     val start = prel.indexOf("(table")
     if start < 0 then prel
@@ -237,15 +215,12 @@ ${spaces(depth)})"""
               return before + after
           case _ =>
         i += 1
-      prel // fallback: if not balanced, return original
+      prel 
 
-  // ===== Closure body collection (functional style) =====
-  // Collects closure bodies in production order
   def collectBodies(code: Code): List[Code] =
     def walk(c: Code, acc: List[Code]): List[Code] = c match
       case Nil => acc
       case MkClos(_, body) :: tail =>
-        // first add this body, then traverse inside to collect nested closures, then continue
         val acc1 = acc :+ body
         val acc2 = walk(body, acc1)
         walk(tail, acc2)
@@ -260,10 +235,8 @@ ${spaces(depth)})"""
       case _ :: tail => walk(tail, acc)
     walk(code, Nil)
 
-  // ===== Table and functions emission =====
   private def functionName(i: Int): String = s"$$closure$i"
 
-  // Count how many entries are already present in the prelude's table (heuristic)
   private def countPreludeTableEntries(prel: String): Int =
     val elemIdx = prel.indexOf("(elem")
     if elemIdx < 0 then 0
@@ -274,7 +247,6 @@ ${spaces(depth)})"""
       val segment = prel.substring(elemIdx, endIdx)
       segment.count(_ == '$')
 
-  // Emit a table declaration or an element segment extending an existing table
   private def emitTable(size: Int, offset: Int, declareTable: Boolean): String =
     if size == 0 then
       if declareTable then
@@ -295,7 +267,6 @@ $elems
 $elems
   )"""
 
-  // Emit closure bodies as functions; each returns i32
   private def emitFunctions(bodies: List[Code], offset: Int): String =
     bodies.zipWithIndex.map { case (body, i) => emitFunction(i, body, offset) }.mkString("\n\n")
 
@@ -306,7 +277,6 @@ ${format(2, emit(body, offset))}
     (return)
   )"""
 
-  // Emit main function body
   private def genMain(code: Code, offset: Int): String =
     s"""  (func (export "main") (result i32)
     (local $$TMP1 i32) (local $$TMP2 i32)

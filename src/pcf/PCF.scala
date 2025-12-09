@@ -59,8 +59,6 @@ object PCF:
         else
           println(code)
 
-      // write code to .wat file associated to .pcf file passed as argument,
-      // returning .wat file relative filename
       def write(code: String): String =
         val WatFilename = filename.get.replaceFirst("\\.pcf\\z", ".wat")
         if verbose then println("writing .wat code to " + WatFilename)
@@ -76,7 +74,6 @@ object PCF:
         println(value)
         println(code) // in case the execution fails
       val value2 = vm.VM.execute(code)
-      // Only compare when the result is an integer (green/blue scope). For functional results, skip equality.
       value match
         case evaluator.Value.IntVal(_) => value2.toString == value.toString
         case _ => true
